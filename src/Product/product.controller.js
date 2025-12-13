@@ -1,66 +1,67 @@
 // Handle request, response, dan validasi body
 
 const express = require("express");
-const prisma = require('../db');
-const { getAllProduct } = require("./product.service");
+const prisma = require("../db");
+const {
+  getAllProduct,
+  getProductById,
+  createProduct,
+  deleteProduct,
+} = require("./product.service");
 
 const router = express.Router();
 
 // Read all data in /product
 router.get("/", async (req, res) => {
-  const products = getAllProduct
+  const products = await getAllProduct();
   res.send(products);
 });
 
 // Get data by Product's id
 router.get("/:id", async (req, res) => {
-  const productId = req.params.id;
+  try {
+    const productId = parseInt(req.params.id);
 
-  const product = await prisma.product.findUnique({
-    where: {
-      id: parseInt(productId),
-    },
-  });
+    // Validasi id = number
+    if (Number.isNaN(productId)) {
+      res.status(400).send({
+        message: "Invalid: Id harus berupa angka",
+      });
+      return;
+    }
 
-  if (!product) {
-    return res
-      .status(404)
-      .send(`Product dengan id: ${productId} tidak ditemukan`);
+    const product = await getProductById(productId);
+    res.send(product);
+  } catch (err) {
+    res.status(400).send({
+      message: err.message,
+    });
   }
-
-  res.send(product);
 });
 
 // Create product
 router.post("/", async (req, res) => {
   const newProduct = req.body;
 
-  const product = await prisma.product.create({
-    data: {
-      name: newProduct.name,
-      price: newProduct.price,
-      description: newProduct.description,
-      image: newProduct.image,
-    },
-  });
+  try {
+    const product = await createProduct(newProduct);
 
-  res.send({
-    messages: "Berhasil tambahkan product: ",
-    data: product,
-  });
+    res.send({
+      messages: "Berhasil tambahkan product: ",
+      data: product,
+    });
+  } catch (err) {
+    res.status(500).send(err.message);
+  }
 });
 
 // Delete data product
 router.delete("/:id", async (req, res) => {
   const productId = req.params.id;
 
-  const deletedProduct = await prisma.product.delete({
-    where: {
-      id: parseInt(productId),
-    },
-  });
+  const product = deleteProduct(parseInt(productId))
 
-  res.send(`Produk dihapus dengan nama: ${deletedProduct.name}`);
+  res.send(`Produk dihapus dengan nama: ${product.name}`);
 });
 
 // Update product
