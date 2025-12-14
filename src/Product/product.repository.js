@@ -28,8 +28,33 @@ const createProduct = async (newProduct) => {
   return product;
 };
 
+const deleteProductById = async (id) => {
+  const product = await prisma.product.delete({
+    where: {
+      id: id,
+    },
+  });
+};
+
+const updateProductById = async (id, productData) => {
+  const product = await prisma.product.update({
+    where: {
+      id: id,
+    },
+    data: {
+      name: productData.name,
+      price: productData.price,
+      description: productData.description,
+      image: productData.image,
+    },
+  });
+  return product;
+};
+
 module.exports = {
   findAllProduct,
   findProductById,
   createProduct,
+  deleteProductById,
+  updateProductById,
 };

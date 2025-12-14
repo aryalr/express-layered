@@ -1,7 +1,6 @@
 // Handle request, response, dan validasi body
 
 const express = require("express");
-const prisma = require("../db");
 const {
   getAllProduct,
   getProductById,
@@ -14,8 +13,8 @@ const {
 const router = express.Router();
 
 // Read all data in /product
-router.get("/", async (req, res) => {
-  const products = await getAllProduct();
+router.get("/", (req, res) => {
+  const products = getAllProduct();
   res.send(products);
 });
 

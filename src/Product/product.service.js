@@ -5,6 +5,8 @@ const {
   findAllProduct,
   findProductById,
   createProduct,
+  deleteProductById,
+  updateProductById,
 } = require("./product.repository");
 
 const getAllProduct = () => {
@@ -31,16 +33,14 @@ const createNewProduct = async (newProduct) => {
 const deleteProduct = async (id) => {
   if (typeof id !== "number" || Number.isNaN(id)) {
     throw Error("Invalid: product ID bukan number");
+    return;
   }
 
-  const product = await prisma.product.delete({
-    where: {
-      id,
-    },
-  });
+  const product = await deleteProductById(id);
 
   if (!product) {
     throw Error(`Product dengan id: ${id} tidak ditemukan`);
+    return;
   }
 };
 
@@ -59,32 +59,12 @@ const updateProduct = async (productData, id) => {
     }
   }
 
-  const product = await prisma.product.update({
-    where: {
-      id: id,
-    },
-    data: {
-      name: productData.name,
-      description: productData.description,
-      price: productData.price,
-      image: productData.image,
-    },
-  });
+  const product = await updateProductById(id, productData);
   return product;
 };
 
 const patchProduct = async (productData, id) => {
-  const product = await prisma.product.update({
-    where: {
-      id: id,
-    },
-    data: {
-      name: productData.name,
-      description: productData.description,
-      price: productData.price,
-      image: productData.image,
-    },
-  });
+  const product = await updateProductById(id, productData);
   return product;
 };
 
