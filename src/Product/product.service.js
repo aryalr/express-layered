@@ -1,9 +1,14 @@
 // Service berguna untuk handle logika bisnis
 
 const prisma = require("../db");
+const {
+  findAllProduct,
+  findProductById,
+  createProduct,
+} = require("./product.repository");
 
-const getAllProduct = async () => {
-  const product = await prisma.product.findMany();
+const getAllProduct = () => {
+  const product = findAllProduct;
   return product;
 };
 
@@ -12,31 +17,19 @@ const getProductById = async (id) => {
     throw Error("Invalid: Id bukan number");
   }
 
-  const product = await prisma.product.findUnique({
-    where: {
-      id: id,
-    },
-  });
-
+  const product = await findProductById(id);
   if (!product) {
     throw Error(`Product dengan id: ${id} tidak ditemukan`);
   }
   return product;
 };
 
-const createProduct = async (newProduct) => {
-  await prisma.product.create({
-    data: {
-      name: newProduct.name,
-      price: newProduct.price,
-      description: newProduct.description,
-      image: newProduct.image,
-    },
-  });
+const createNewProduct = async (newProduct) => {
+  product = await createProduct(newProduct);
 };
 
 const deleteProduct = async (id) => {
-  if ((typeof id !== "number") || Number.isNaN(id)) {
+  if (typeof id !== "number" || Number.isNaN(id)) {
     throw Error("Invalid: product ID bukan number");
   }
 
@@ -51,9 +44,55 @@ const deleteProduct = async (id) => {
   }
 };
 
+const updateProduct = async (productData, id) => {
+  // data validasi input
+  const requiredFields = ["name", "description", "price", "image"];
+
+  // looping untuk pengecekan data
+  for (const field of requiredFields) {
+    if (
+      productData[field] === undefined ||
+      productData[field] === null ||
+      productData[field] === ""
+    ) {
+      throw Error(`Update gagal: Data ${field} belum diisi`);
+    }
+  }
+
+  const product = await prisma.product.update({
+    where: {
+      id: id,
+    },
+    data: {
+      name: productData.name,
+      description: productData.description,
+      price: productData.price,
+      image: productData.image,
+    },
+  });
+  return product;
+};
+
+const patchProduct = async (productData, id) => {
+  const product = await prisma.product.update({
+    where: {
+      id: id,
+    },
+    data: {
+      name: productData.name,
+      description: productData.description,
+      price: productData.price,
+      image: productData.image,
+    },
+  });
+  return product;
+};
+
 module.exports = {
   getAllProduct,
   getProductById,
-  createProduct,
+  createNewProduct,
   deleteProduct,
+  updateProduct,
+  patchProduct,
 };

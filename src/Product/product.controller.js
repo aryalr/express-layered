@@ -5,8 +5,10 @@ const prisma = require("../db");
 const {
   getAllProduct,
   getProductById,
-  createProduct,
+  createNewProduct,
   deleteProduct,
+  updateProduct,
+  patchProduct,
 } = require("./product.service");
 
 const router = express.Router();
@@ -44,7 +46,7 @@ router.post("/", async (req, res) => {
   const newProduct = req.body;
 
   try {
-    const product = await createProduct(newProduct);
+    const product = await createNewProduct(newProduct);
 
     res.send({
       messages: "Berhasil tambahkan product: ",
@@ -59,7 +61,7 @@ router.post("/", async (req, res) => {
 router.delete("/:id", async (req, res) => {
   const productId = req.params.id;
 
-  const product = deleteProduct(parseInt(productId))
+  const product = await deleteProduct(parseInt(productId));
 
   res.send(`Produk dihapus dengan nama: ${product.name}`);
 });
@@ -69,35 +71,26 @@ router.put("/:id", async (req, res) => {
   const productId = req.params.id;
   const productData = req.body;
 
-  // data validasi input
-  const updateData = ["name", "description", "price", "image"];
-
-  // looping untuk pengecekan data
-  for (const data of updateData) {
-    if (!productData[data]) {
-      return res.status(400).send({
-        messages: `Update gagal: Data ${data} belum diisi`,
-        data: null,
-      });
-    }
+  // Validasi Product id
+  if (isNaN(productId)) {
+    return res.status(400).send({
+      message: "Id harus berupa angka",
+    });
   }
 
-  const product = await prisma.product.update({
-    where: {
-      id: parseInt(productId),
-    },
-    data: {
-      name: productData.name,
-      description: productData.description,
-      price: productData.price,
-      image: productData.image,
-    },
-  });
+  try {
+    const product = await updateProduct(productData, parseInt(productId));
 
-  res.send({
-    messages: "Edit product berhasil dengan data:",
-    data: product,
-  });
+    res.send({
+      messages: "Edit product berhasil dengan data:",
+      data: product,
+    });
+  } catch (err) {
+    if (err.code === "P2025") {
+      return res.status(404).send({ message: "Product tidak ditemukan" });
+    }
+    res.status(400).send({ message: err.message });
+  }
 });
 
 // Update partial data product
@@ -105,21 +98,24 @@ router.patch("/:id", async (req, res) => {
   const productId = req.params.id;
   const productData = req.body;
 
-  const product = await prisma.product.update({
-    where: {
-      id: parseInt(productId),
-    },
-    data: {
-      name: productData.name,
-      description: productData.description,
-      price: productData.price,
-      image: productData.image,
-    },
-  });
-  res.send({
-    messages: "edit data berhasil dengan data: ",
-    data: product,
-  });
+  // Validasi product id
+  if (isNaN(productId)) {
+    return res.status(400).send({ message: "ID harus berupa angka" });
+  }
+
+  try {
+    const product = await patchProduct(productData, parseInt(productId));
+
+    res.send({
+      message: "Update data berhasil",
+      data: product,
+    });
+  } catch (err) {
+    if (err.code === "P2025") {
+      return res.status(404).send({ message: "Product tidak ditemukan" });
+    }
+    res.status(400).send(err.message);
+  }
 });
 
 module.exports = router;
