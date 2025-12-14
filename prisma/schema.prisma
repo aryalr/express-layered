@@ -10,20 +10,29 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  USER
+  ADMIN
 }
 
 model User {
-  id Int @id @default(autoincrement())
-  username String
-  name String
+  id       Int       @id @default(autoincrement())
+  username String    @unique
+  name     String
   password String
-  product Product
+  role     Role      @default(USER)
+  product  Product[]
 }
 
 model Product {
-  id Int @id @default(autoincrement())
-  name String
-  price Int
+  id          Int    @id @default(autoincrement())
+  name        String
+  price       Int
   description String
-  image String
+  image       String
+  ownerId     Int
+  owner       User   @relation(fields: [ownerId], references: [id])
 }
