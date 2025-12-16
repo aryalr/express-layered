@@ -1,6 +1,5 @@
 // Service berguna untuk handle logika bisnis
 
-const prisma = require("../db");
 const {
   findAllProduct,
   findProductById,
@@ -33,14 +32,12 @@ const createNewProduct = async (newProduct) => {
 const deleteProduct = async (id) => {
   if (typeof id !== "number" || Number.isNaN(id)) {
     throw Error("Invalid: product ID bukan number");
-    return;
   }
 
   const product = await deleteProductById(id);
 
   if (!product) {
     throw Error(`Product dengan id: ${id} tidak ditemukan`);
-    return;
   }
 };
 

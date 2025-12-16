@@ -12,109 +12,114 @@ const {
 
 const router = express.Router();
 
+// Function Wrapper
+const asyncHandler = (fn) => (req, res, next) => {
+  Promise.resolve(fn(req, res, next)).catch(next);
+};
+
 // Read all data in /product
-router.get("/", (req, res) => {
-  const products = getAllProduct();
-  res.send(products);
-});
+router.get(
+  "/",
+  asyncHandler((req, res) => {
+    const products = getAllProduct();
+    res.send(products);
+  })
+);
 
 // Get data by Product's id
-router.get("/:id", async (req, res) => {
-  try {
+router.get(
+  "/:id",
+  asyncHandler(async (req, res) => {
     const productId = parseInt(req.params.id);
 
     // Validasi id = number
     if (Number.isNaN(productId)) {
-      res.status(400).send({
-        message: "Invalid: Id harus berupa angka",
-      });
-      return;
+      const error = new Error("Invalid: Id harus berupa angka");
+      error.status = 400;
+      throw error;
     }
 
     const product = await getProductById(productId);
     res.send(product);
-  } catch (err) {
-    res.status(400).send({
-      message: err.message,
-    });
-  }
-});
+  })
+);
 
 // Create product
-router.post("/", async (req, res) => {
-  const newProduct = req.body;
-
-  try {
+router.post(
+  "/",
+  asyncHandler(async (req, res) => {
+    const newProduct = req.body;
     const product = await createNewProduct(newProduct);
 
     res.send({
       messages: "Berhasil tambahkan product: ",
       data: product,
     });
-  } catch (err) {
-    res.status(500).send(err.message);
-  }
-});
+  })
+);
 
 // Delete data product
-router.delete("/:id", async (req, res) => {
-  const productId = req.params.id;
+router.delete(
+  "/:id",
+  asyncHandler(async (req, res) => {
+    const productId = req.params.id;
 
-  const product = await deleteProduct(parseInt(productId));
+    if (Number.isNaN(productId)) {
+      const error = new Error("Invalid: Id harus berupa angka");
+      error.status = 400;
+      throw error;
+    }
 
-  res.send(`Produk dihapus dengan nama: ${product.name}`);
-});
+    const product = await deleteProduct(parseInt(productId));
+
+    res.send(`Produk dihapus dengan nama: ${product.name}`);
+  })
+);
 
 // Update product
-router.put("/:id", async (req, res) => {
-  const productId = req.params.id;
-  const productData = req.body;
+router.put(
+  "/:id",
+  asyncHandler(async (req, res) => {
+    const productId = req.params.id;
+    const productData = req.body;
 
-  // Validasi Product id
-  if (isNaN(productId)) {
-    return res.status(400).send({
-      message: "Id harus berupa angka",
-    });
-  }
+    // Validasi Product id
+    if (isNaN(productId)) {
+      const error = new Error("Invalid: Id harus berupa angka");
+      error.status = 400;
+      throw error;
+    }
 
-  try {
     const product = await updateProduct(productData, parseInt(productId));
 
     res.send({
       messages: "Edit product berhasil dengan data:",
       data: product,
     });
-  } catch (err) {
-    if (err.code === "P2025") {
-      return res.status(404).send({ message: "Product tidak ditemukan" });
-    }
-    res.status(400).send({ message: err.message });
-  }
-});
+  })
+);
 
 // Update partial data product
-router.patch("/:id", async (req, res) => {
-  const productId = req.params.id;
-  const productData = req.body;
+router.patch(
+  "/:id",
+  asyncHandler(async (req, res) => {
+    const productId = req.params.id;
+    const productData = req.body;
 
-  // Validasi product id
-  if (isNaN(productId)) {
-    return res.status(400).send({ message: "ID harus berupa angka" });
-  }
+    // Validasi product id
+    if (isNaN(productId)) {
+      const error = new Error("Invalid: Id harus berupa angka");
+      error.status = 400;
+      throw error;
+    }
 
-  try {
     const product = await patchProduct(productData, parseInt(productId));
 
     res.send({
       message: "Update data berhasil",
       data: product,
     });
-  } catch (err) {
-    if (err.code === "P2025") {
-      return res.status(404).send({ message: "Product tidak ditemukan" });
-    }
-    res.status(400).send(err.message);
-  }
-});
+  })
+);
 
 module.exports = router;
